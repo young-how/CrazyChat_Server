@@ -1,5 +1,6 @@
 package com.dlut.crazychat.controller;
 
+import com.dlut.crazychat.pojo.rankList;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.service.userService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 @RestController
 public class userController {
@@ -25,6 +28,12 @@ public class userController {
     public ResponseEntity<userStat> sendMessage(@RequestBody userStat userstat){
         //根据前端返回的json对象查找redis，并更新redis状态
         return ResponseEntity.ok().body(userservice.addMessage(userstat));
+    }
+    @PostMapping("/rankList")
+    public ResponseEntity<rankList> getRankList(){
+        //查看积分榜
+        rankList rank=userservice.getRankList();
+        return ResponseEntity.ok().body(rank);
     }
 
 }
