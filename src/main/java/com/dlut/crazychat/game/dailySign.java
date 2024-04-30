@@ -1,6 +1,8 @@
 package com.dlut.crazychat.game;
 
 import jakarta.annotation.Resource;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
+@Data
 @Component
 public class dailySign {
     @Resource
@@ -19,6 +21,14 @@ public class dailySign {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Value("${game.daiySign.base_reward}")
+    private int base_reward;   //基础签到奖励
+    @Value("${game.daiySign.factor_sign_count}")
+    private int factor_sign_count;  //签到总数的奖励递增系数
+    @Value("${game.daiySign.factor_sign_continues}")
+    private int factor_sign_continues;  //连续签到的奖励递增系数
+    @Value("${game.daiySign.max_magnification}")
+    private double max_magnification;  //最高翻倍倍率
 
     /**
      * 用户签到，可以补签
@@ -36,9 +46,17 @@ public class dailySign {
         //构建redis key
         String signKey = buildSignKey(userId,date);
         //查看指定日期是否已签到
-        if (isSigned(userId, day)){
+        if (isSigned(signKey, day)){
             result.put("message", "当前日期已完成签到，无需再签");
             result.put("code",400);
+            // 根据当前日期统计签到次数
+            Date today = new Date();
+            //统计连续签到次数
+            int continuous =  getSignCount(userId, today);
+            //统计总签到次数
+            long count = getSumSignCount(userId, today);
+            result.put("continuous",continuous);
+            result.put("count",count);
             return result;
         }
         // 签到
@@ -49,13 +67,26 @@ public class dailySign {
         int continuous =  getSignCount(userId, today);
         //统计总签到次数
         long count = getSumSignCount(userId, today);
+        int reward=calReward(count,continuous);   //生成的随机奖励
         result.put("message","签到成功");
         result.put("code",200);
         result.put("continuous",continuous);
         result.put("count",count);
+        result.put("reward",reward);
         return result;
     }
-
+    /**
+     * 生成奖励值
+     * @param count 签到总数
+     * @param continuous 连续签到的天数
+     * @return 签到奖励
+     * */
+    public int calReward(long count,int continuous){
+        //计算奖励值
+        Random rand=new Random();  //随机数生成器
+        double rand_num= rand.nextDouble();  //随机生成的小数
+        return (int)((base_reward+factor_sign_count*count+factor_sign_continues*continuous)/(rand_num+(1.0/max_magnification)));   //生成的随机奖励;
+    }
     /**
      *
      * 格式化日期
@@ -193,4 +224,5 @@ public class dailySign {
         //偏移量 offset 从 0 开始
         return redisTemplate.opsForValue().getBit(userId, offset);
     }
+
 }

@@ -148,7 +148,7 @@ public class gameService {
                 Long sign_count=(Long)re.get("count");   //签到的总数
                 Random rand=new Random();  //随机数生成器
                 double rand_num= rand.nextDouble();  //随机生成的小数
-                int reward=(int)((1000+10*sign_count+30*sign_sum)/(rand_num+0.1));   //生成的随机奖励
+                int reward=(int)re.get("reward");   //得到生成的奖励
                 userservice.addScore(user,reward);  //更新奖励
                 info.append("签到奖励:"+reward+"  签到天数:"+sign_count+"  连续签到天数:"+sign_sum+"\n");
             }
@@ -161,6 +161,7 @@ public class gameService {
             info.append("#rk \t说明：显示用户排名\n");
             info.append("#gs n \t说明：猜词游戏，猜中数字n即可获得奖励\n");
             info.append("#qd \t说明：每日签到,随机生成一个(0-1)的随机数x，签到奖励=(1000+10*签到天数+30*连续签到天数)/(x+0.1)\n");
+            return info.toString();
         }
         return "命令错误，请检查指令";
     }
