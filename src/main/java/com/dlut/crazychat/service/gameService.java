@@ -1,6 +1,7 @@
 package com.dlut.crazychat.service;
 
 import com.dlut.crazychat.game.dailySign;
+import com.dlut.crazychat.game.findSpy;
 import com.dlut.crazychat.game.guessNum;
 import com.dlut.crazychat.game.lottery;
 import com.dlut.crazychat.pojo.rankList;
@@ -26,6 +27,9 @@ public class gameService {
     private lottery lt;   //彩票游戏
     @Autowired
     private dailySign sign;  //每日签到
+    @Autowired
+    private findSpy findspy;
+    private String gameNamePlaying="None";  //正在进行的游戏
 //    @Autowired
 //    private SystemManager manager;
     public String process(String user_id,String command){
@@ -163,6 +167,12 @@ public class gameService {
             info.append("#qd \t说明：每日签到,随机生成一个(0-1)的随机数x，签到奖励=(1000+10*签到天数+30*连续签到天数)/(x+0.1)\n");
             return info.toString();
         }
+        else if(command.contains("#join")){
+            //包含加入游戏的命令
+
+        }
+
+
         return "命令错误，请检查指令";
     }
 }

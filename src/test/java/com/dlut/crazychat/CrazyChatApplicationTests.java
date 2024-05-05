@@ -5,19 +5,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.HashMap;
+
 @SpringBootTest
 class CrazyChatApplicationTests {
-    @Autowired
-    public dailySign sign;
+
     @Test
     void contextLoads() {
-        int re=0;
-        for(int i=1;i<30;i++){
-            int reward=sign.calReward(i,i);
-            re+=reward;
-            System.out.println(reward);
+        HashMap<String,String> mp=new HashMap<>();
+        mp.put("baidu","baidu");
+        mp.put("tencent","baidu");
+        mp.put("huawei","baidu");
+        mp.put("ali","baidu");
+        for(String key:mp.keySet()){
+            System.out.println(key);
         }
-        System.out.println("签到总奖励:"+re);
     }
 
 }
