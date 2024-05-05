@@ -84,6 +84,7 @@ public class userService {
         user=updateRankList(user);  //更新排名
         return user;
     }
+
     public userStat addMessage(userStat user){
         user=find_Update_User(user);  //先去查找是否用户注册过
         user.setMessage_num(user.getMessage_num()+1);  //变更发言数目

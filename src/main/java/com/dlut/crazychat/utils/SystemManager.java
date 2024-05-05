@@ -3,6 +3,7 @@ package com.dlut.crazychat.utils;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.service.gameService;
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -26,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Aspect
+@Data
 @Component
 public class SystemManager extends Thread{
     @Value("${SystemMessage.ip}")
@@ -69,6 +71,29 @@ public class SystemManager extends Thread{
         };
         executor.execute(send_task);
     }
+    /*
+     * @param info: 发送的私密信息
+    	 * @param user: 目标用户
+      * @return void
+     * @author younghow
+     * @description 系统单独给目标用户发送消息
+     * @date younghow younghow
+     */
+    public void send(String info,userStat user){
+        Runnable send_task=()->{
+            ProducerRecord<String, String> record = new ProducerRecord<>(topic_name,  "/toUser:"+user.getId()+"@@系统私密消息: "+info+"\n&&");
+            kafkaProducer.send(record);
+        };
+        executor.execute(send_task);
+    }
+    public void send(String info,String userid){
+        Runnable send_task=()->{
+            String order="/toUser:"+userid+"@@系统私密消息: "+info+"&&";
+            ProducerRecord<String, String> record = new ProducerRecord<>(topic_name,  order);
+            kafkaProducer.send(record);
+        };
+        executor.execute(send_task);
+    }
     @Before("execution(* com.dlut.crazychat.service.userService.*(..)) && args(user,..)")
     public void systemEvents_before(userStat user){
         //系统事件.监听service操作前的用户状态，是一个加强方法，用于增强service中的方法
@@ -100,6 +125,9 @@ public class SystemManager extends Thread{
                     Thread.sleep(20); // 线程休眠1秒
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                }
+                finally {
+                    continue;
                 }
             }
         }

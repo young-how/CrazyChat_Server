@@ -7,17 +7,23 @@ import com.dlut.crazychat.game.lottery;
 import com.dlut.crazychat.pojo.rankList;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.utils.SystemManager;
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@Data
+@ToString
 public class gameService {
     @Autowired
     private userService userservice;
@@ -30,12 +36,16 @@ public class gameService {
     @Autowired
     private findSpy findspy;
     private String gameNamePlaying="None";  //正在进行的游戏
+    @Autowired
+    private SystemManager manager;
 //    @Autowired
-//    private SystemManager manager;
+//    public void setManager(SystemManager systemManager){
+//        manager=systemManager;
+//    }
     public String process(String user_id,String command){
         userStat user=userservice.findUserByID(user_id);
         //处理从消息队列来的消息，并返回处理信息
-        if(command.contains("#stat")||command.contains("#st")){
+        if(command.contains("#stat")){
             //返回用户状态
             //userStat user=userservice.findUserByID(user_id);
             String info="\n用户名:"+user.getName()+"  发言数:"+user.getMessage_num()+"  积分:"+user.getScore()+" 等级:"+user.getLevel()+" 排名:"+user.getRank()+"\n";   //构造返回信息
@@ -167,12 +177,120 @@ public class gameService {
             info.append("#qd \t说明：每日签到,随机生成一个(0-1)的随机数x，签到奖励=(1000+10*签到天数+30*连续签到天数)/(x+0.1)\n");
             return info.toString();
         }
+        else if(command.contains("#game")){
+            StringBuilder info=new StringBuilder("\n********************游戏列表********************\n");
+            info.append("findSpy\t说明：输入#join findSpy加入游戏队列\n");
+            return info.toString();
+        }
         else if(command.contains("#join")){
-            //包含加入游戏的命令
+            //包含加入游戏等待队列的命令
+            String input = command;
+            String pattern = "#join\\s+(\\w+)";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(input);
+            if (m.find()) {
+                String gamename = m.group(1);
+                if(gamename.equals("findSpy")){
+                    if(gameNamePlaying!="None"&&gameNamePlaying!="findSpy") return gameNamePlaying+"正在运行中，请输入#end "+gameNamePlaying+",结束后再输入!\n";
+                    if(gameNamePlaying.equals("None")){
+                        gameNamePlaying="findSpy";
+                        findspy.setGameStatus(0);
+                    }
+                    String info=findspy.join(user);  //加入用户
+                    return info;
+                }
+            } else {
+                return "请输入正确的游戏名\n";
+            }
+        }
+        else if(command.contains("#start")){
+            //开始游戏的命令
+            String input = command;
+            String pattern = "#start\\s+(\\w+)";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(input);
+            if(gameNamePlaying.equals("None")) return "当前没有正在组队的游戏";
+            if(gameNamePlaying.equals("findSpy")){
+                String info="";
+                Map<String,Object> re=findspy.startGame(user);  //加入用户
+                if(re.get("code").equals(200)){
+                    //游戏启动失败
+                    info=(String) re.get("info");
+                    return info;
+                }
+                else{
+                    //启动成功
+                    Map<String,String> roles=(Map<String,String>)re.get("roles");  //获取所有的角色信息
+                    for(String id:roles.keySet()){
+                        manager.send(roles.get(id),id);  //为特定用户发送私密消息
+                        manager.send(roles.get(id));  //为所有用户发送消息，仅测试使用
+                    }
+                }
+                return "游戏启动成功，系统为每位用户发送了私密信息，请查收！\n";
+            }
+            return "当前游戏名称有误";
+        }
+        else if(command.contains("#end")){
+            //结束某游戏的命令
+            String input = command;
+            String pattern = "#end\\s+(\\w+)";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(input);
+            if (m.find()) {
+                String gamename = m.group(1);
+                if(gamename.equals("findSpy")){
+                    gameNamePlaying="None";
+                    String info=findspy.endGame();  //结束游戏
+                    return info;
+                }
+            } else {
+                return "请输入正确的游戏名\n";
+            }
+        }
+        else if(command.contains("#vote")){
+            //给某个编号的用户或者id进行投票
+            String input = command;
+            String pattern = "\\d+";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(input);
+            if (m.find()) {
+                String num = m.group(0);  //投票的编号
+                if(gameNamePlaying.equals("findSpy")){
+                    Map<String,String> vote_result=findspy.vote(user,Integer.parseInt(num));
+                    String info=vote_result.get("info_vote"); //获取投票结果
+                    if(vote_result.containsKey("end")){
+                        //当前游戏已结束，结算奖励
+                        vote_result.remove("end");
+                        vote_result.remove("info_vote");
+                        vote_result.remove("info");
+                        String add_info=(String)vote_result.get("info"); //额外的结算信息
+                        info=info+add_info;
+                        for(String id:vote_result.keySet()){
+                            int reward=Integer.parseInt(vote_result.get(id));  //获取奖励值
+                            try{
+                                userStat addsocore_user=new userStat();
+                                addsocore_user.setId(id);
+                                userservice.addScore(addsocore_user,reward);//对相应的用户进行加分
+                            }
+                            catch (RuntimeException e){
+                                e.printStackTrace();
+                            }
+                            finally {
+                                continue;
+                            }
 
+                        }
+                        return info;
+                    }
+
+                    return info;
+                }
+            } else {
+                return "没有正在进行投票的游戏\n";
+            }
         }
 
 
-        return "命令错误，请检查指令";
+        return "命令错误，请检查指令\n";
     }
 }
