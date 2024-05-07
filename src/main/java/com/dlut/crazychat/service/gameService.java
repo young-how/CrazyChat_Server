@@ -48,7 +48,7 @@ public class gameService {
         if(command.contains("#stat")){
             //返回用户状态
             //userStat user=userservice.findUserByID(user_id);
-            String info="\n用户名:"+user.getName()+"  发言数:"+user.getMessage_num()+"  积分:"+user.getScore()+" 等级:"+user.getLevel()+" 排名:"+user.getRank()+"\n";   //构造返回信息
+            String info="\n用户名:"+user.getName()+"  id号:"+user.getId()+"  发言数:"+user.getMessage_num()+"  积分:"+user.getScore()+" 等级:"+user.getLevel()+" 排名:"+user.getRank()+"\n";   //构造返回信息
             //manager.send(info);
             return info;
         }
@@ -56,8 +56,12 @@ public class gameService {
             rankList rank=userservice.getRankList();  //获取所有用户的排名
             StringBuilder info=new StringBuilder("\n********************积分排行榜********************\n");
             info.append("排名\t用户名\t积分\t等级\n");
+            long count=1;
             for(userStat user_rk: rank.getUsers()){
-                info.append(user_rk.getRank()+"\t"+user_rk.getName()+"\t"+user_rk.getScore()+"\t"+user_rk.getLevel()+"\n");
+                info.append(count+"\t"+user_rk.getName()+"\t"+user_rk.getScore()+"\t"+user_rk.getLevel()+"\n");
+                user_rk.setRank(count);
+                userservice.find_Update_User(user_rk);  //更新每个用户的排名
+                count++;
             }
             info.append("********************积分排行榜********************"+"\n");
             //manager.send(info.toString());
@@ -175,6 +179,10 @@ public class gameService {
             info.append("#rk \t说明：显示用户排名\n");
             info.append("#gs n \t说明：猜词游戏，猜中数字n即可获得奖励\n");
             info.append("#qd \t说明：每日签到,随机生成一个(0-1)的随机数x，签到奖励=(1000+10*签到天数+30*连续签到天数)/(x+0.1)\n");
+            info.append("#give \t说明：赠予其他玩家积分，使用格式为#give id n。其中id为输入#stat后得到的唯一id，n为赠送的积分数目。\n");
+            info.append("#join findSpy \t说明：加入寻找卧底游戏的等待队列中，当人数集齐后输入#start开始游戏。" +
+                    "游戏说明：游戏开始后系统会给每个玩家发一个红色字体的私密信息，包含编号和自己的词语，游戏开始后所有玩家将名称改为对应的号码。" +
+                    "当所有玩家描述完后输入#vote n投票给n号玩家。票数最多的玩家将会被踢出游戏，无法进行投票。直到所有卧底被找出或者游戏人数中的平民玩家小于卧底人数\n");
             return info.toString();
         }
         else if(command.contains("#game")){
@@ -288,6 +296,44 @@ public class gameService {
             } else {
                 return "没有正在进行投票的游戏\n";
             }
+        }
+        else if(command.contains("#give")){
+            // 匹配 MAC 地址的正则表达式
+            String macRegex = "(?i)([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})";
+            // 编译正则表达式
+            Pattern macPattern = Pattern.compile(macRegex);
+            String macAddress="";
+            // 匹配 MAC 地址
+            Matcher macMatcher = macPattern.matcher(command);
+            if (macMatcher.find()) {
+                macAddress = macMatcher.group();
+                //System.out.println("MAC 地址: " + macAddress);
+            } else {
+                //System.out.println("未找到 MAC 地址。");
+                return "id号格式错误\n";
+            }
+            //判别用户是否存在
+            if(userservice.findUserByID(macAddress)==null){
+                return "对应的用户不存在\n";
+            }
+            // 匹配赠予的积分数
+            userStat gived_user=userservice.findUserByID(macAddress);  //找到对应的用户
+            String numberRegex = macAddress+" (\\d+)";
+            Pattern numberPattern = Pattern.compile(numberRegex);
+            Matcher numberMatcher = numberPattern.matcher(command);
+            int give_num=0;
+            if (numberMatcher.find()) {
+                String number = numberMatcher.group(1);
+                give_num=Integer.parseInt(number);  //赠送的积分数目
+                if(give_num<0) return "你很坏嘛，程序虽然bug多，但别想着偷人家钱哦~\n";
+                if(user.getScore()<give_num) return "你口袋里的积分貌似不够送人家哦~\n";
+
+                userservice.addScore(gived_user,give_num);
+                userservice.addScore(user,-give_num);   //bug，还需要保证事务的一致性
+            } else {
+                return "你输入的积分数目有误\n";
+            }
+            return user.getName()+" 赠送了玩家:"+ gived_user.getName()+" "+give_num+" 积分\n";
         }
         return "命令错误，请检查指令\n";
     }
