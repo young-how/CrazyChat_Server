@@ -205,10 +205,10 @@ public class findSpy {
             re.put("info_vote","你已经投票，请勿重复投票!\n");
             return re;
         }
-        if(num<=0||num>users_gaming.size()){
-            re.put("info_vote","无效的号码，请重新投票\n");
-            return re;  //投票无效的号码，投票失败
-        }
+//        if(num<=0||num>users_gaming.size()){
+//            re.put("info_vote","无效的号码，请重新投票\n");
+//            return re;  //投票无效的号码，投票失败
+//        }
         isVoted.put(usr.getId(),true);  //标记为已投票
         String usr_id=num2ID.get(num);  //根据编号获取用户id
         vote_num.put(usr_id,vote_num.getOrDefault(usr_id,0)+1);  //为对应的用户投票
@@ -259,8 +259,10 @@ public class findSpy {
                 int reward=500;  //游戏奖励
                 String target_word=gameWord;
                 if(result==1){
-                    target_word=words.get(gameWord);
-                    if(isSpy) reward+=rewardWinnerSpy;  //卧底获胜奖励加成
+                    if(isSpy){
+                        target_word=words.get(gameWord);
+                        reward+=rewardWinnerSpy;  //卧底获胜奖励加成
+                    }
                 }
                 else{
                     reward+=rewardWinnerPeople;  //平民奖励加成

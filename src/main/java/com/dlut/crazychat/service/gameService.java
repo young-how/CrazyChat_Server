@@ -223,7 +223,7 @@ public class gameService {
                     Map<String,String> roles=(Map<String,String>)re.get("roles");  //获取所有的角色信息
                     for(String id:roles.keySet()){
                         manager.send(roles.get(id),id);  //为特定用户发送私密消息
-                        manager.send(roles.get(id));  //为所有用户发送消息，仅测试使用
+                        //manager.send(roles.get(id));  //为所有用户发送消息，仅测试使用
                     }
                 }
                 return "游戏启动成功，系统为每位用户发送了私密信息，请查收！\n";
@@ -262,8 +262,8 @@ public class gameService {
                         //当前游戏已结束，结算奖励
                         vote_result.remove("end");
                         vote_result.remove("info_vote");
-                        vote_result.remove("info");
                         String add_info=(String)vote_result.get("info"); //额外的结算信息
+                        vote_result.remove("info");
                         info=info+add_info;
                         for(String id:vote_result.keySet()){
                             int reward=Integer.parseInt(vote_result.get(id));  //获取奖励值
@@ -289,8 +289,6 @@ public class gameService {
                 return "没有正在进行投票的游戏\n";
             }
         }
-
-
         return "命令错误，请检查指令\n";
     }
 }

@@ -59,5 +59,4 @@ public class userController {
         Sys.send("test",id);
         return id;
     }
-
 }
