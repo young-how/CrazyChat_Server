@@ -1,5 +1,6 @@
 package com.dlut.crazychat;
 
+import com.dlut.crazychat.game.Ollama_robot;
 import com.dlut.crazychat.game.dailySign;
 import com.dlut.crazychat.game.findSpy;
 import org.junit.jupiter.api.Test;
@@ -7,13 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.HashMap;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.lang.Thread.sleep;
 
 @SpringBootTest
 class CrazyChatApplicationTests {
     @Autowired
     private findSpy sp;
+    @Autowired
+    private Ollama_robot robot;
     @Test
     void contextLoads() {
         String str = "#give 04-7C-16-0B-67-68 1000 \n";
@@ -46,6 +52,15 @@ class CrazyChatApplicationTests {
         } else {
             System.out.println("未找到数字。");
         }
+    }
+    @Test
+    public void testLottery(){
+        //测试彩票
+    }
+    @Test
+    public void testRobot(){
+        robot.askOllama("用中文！请介绍一下你的功能");
+
     }
 
 }

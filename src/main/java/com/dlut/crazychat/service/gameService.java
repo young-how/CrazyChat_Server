@@ -1,9 +1,6 @@
 package com.dlut.crazychat.service;
 
-import com.dlut.crazychat.game.dailySign;
-import com.dlut.crazychat.game.findSpy;
-import com.dlut.crazychat.game.guessNum;
-import com.dlut.crazychat.game.lottery;
+import com.dlut.crazychat.game.*;
 import com.dlut.crazychat.pojo.rankList;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.utils.SystemManager;
@@ -38,12 +35,15 @@ public class gameService {
     private String gameNamePlaying="None";  //正在进行的游戏
     @Autowired
     private SystemManager manager;
+    @Autowired
+    private Ollama_robot robot;
 //    @Autowired
 //    public void setManager(SystemManager systemManager){
 //        manager=systemManager;
 //    }
     public String process(String user_id,String command){
-        userStat user=userservice.findUserByID(user_id);
+
+         userStat user=userservice.findUserByID(user_id);
         //处理从消息队列来的消息，并返回处理信息
         if(command.contains("#stat")){
             //返回用户状态
@@ -82,7 +82,12 @@ public class gameService {
             if (matcher.find()) {
                 // 获取匹配到的数字字符串
                 String numberStr = matcher.group(1);
-                int num=Integer.parseInt(numberStr);
+                int num=Integer.parseInt(numberStr);  //彩票的数量
+                int remain_money=user.getScore(); //用户剩余分数
+                if(remain_money<num*lt.getPrize()){
+                    //剩下的分数不足以买彩票
+                    return "你的积分不够买彩票哦，攒点钱再来吧\n";
+                }
                 Map<String,Integer> re=lt.buy(num); //买num张彩票
                 int earn=0;
                 String information="";
@@ -334,6 +339,20 @@ public class gameService {
                 return "你输入的积分数目有误\n";
             }
             return user.getName()+" 赠送了玩家:"+ gived_user.getName()+" "+give_num+" 积分\n";
+        }
+        else if(command.contains("#ask")){
+            //询问ollama机器人
+            String input = command;
+            String pattern = "#ask\\s+(\\w+)";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(input);
+            if (m.find()) {
+                String question = m.group(1);
+                robot.askOllama(question);  //询问机器人问题，机器人回复
+            } else {
+                return "请正确输入你的问题\n";
+            }
+            return "";
         }
         return "命令错误，请检查指令\n";
     }

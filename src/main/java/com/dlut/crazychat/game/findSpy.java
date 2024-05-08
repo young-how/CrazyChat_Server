@@ -133,12 +133,12 @@ public class findSpy {
             result.put("code",code);
             result.put("info","游戏启动失败，已经有正在运行的游戏\n");
         }
-//        else if(users_waiting.size()<4){
-//            //队列人数不足
-//            int code=200;  //启动失败
-//            result.put("code",code);
-//            result.put("info","游戏启动失败，游戏人数不足四人\n");
-//        }
+        else if(users_waiting.size()<3){
+            //队列人数不足
+            int code=200;  //启动失败
+            result.put("code",code);
+            result.put("info","游戏启动失败，游戏人数不足3人\n");
+        }
         else{
             //游戏处于等待中
             gameStatus=1;   //更改游戏状态
@@ -182,6 +182,7 @@ public class findSpy {
         }
         return "游戏结束成功!";
     }
+
     public void rellocation(){
         //分配角色和词语和编号，完成初始化工作
         gameWord=getWord();   //分配当局的游戏词语
@@ -285,17 +286,33 @@ public class findSpy {
             }
             re.append("********************游戏结算结果********************\n");
             conclusion.put("info",re.toString());
-
+            moveGamer2Waiting();  //将所有游戏中的玩家置于等待队列
         }
         else{
             //游戏继续
-            re.append("游戏继续！！！");
+            re.append("游戏继续！！！剩下玩家编号:"+getRemainGamer());
             resetOneTurn();  //重置一个回合的信息
             conclusion.put("info",re.toString());
         }
 
         return conclusion;
 
+    }
+    public void moveGamer2Waiting(){
+        //将所有玩家置于等待队列
+        for(String id:users_gaming.keySet()){
+            users_waiting.put(id,users_gaming.get(id));
+        }
+        users_gaming.clear();  //清除所有正在游戏的玩家
+    }
+    public String getRemainGamer(){
+        //获取剩下的玩家编号
+        StringBuilder re=new StringBuilder();
+        for(String user_id:users_gaming.keySet()){
+            int num=ID2num.get(user_id); //玩家编号
+            re.append(num+"号 ");
+        }
+        return re.toString();
     }
 
     public void out_player(String user_id){
