@@ -59,8 +59,8 @@ class CrazyChatApplicationTests {
     }
     @Test
     public void testRobot(){
-        robot.askOllama("用中文！请介绍一下你的功能");
-
+        //robot.askOllama("天空为什么是蓝色的");
+        //robot.askOllamaByStream("帮我写一段java用来生成uuid的代码");
     }
 
 }

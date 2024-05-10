@@ -71,6 +71,34 @@ public class SystemManager extends Thread{
         };
         executor.execute(send_task);
     }
+    public void send(String info,boolean showName){
+        //showName表示是否展示系统的名称
+        Runnable send_task=()->{
+            ProducerRecord<String, String> record;
+            if(showName==true){
+                record = new ProducerRecord<>(topic_name,  userName+": "+info+"\n");
+            }
+            else{
+                 record = new ProducerRecord<>(topic_name,  info);
+            }
+            kafkaProducer.send(record);
+        };
+        executor.execute(send_task);
+    }
+    public void send(String info,boolean showName,userStat user){
+        //showName表示是否展示系统的名称,进行私密发送
+        Runnable send_task=()->{
+            ProducerRecord<String, String> record;
+            if(showName==true){
+                record = new ProducerRecord<>(topic_name,  "/toUser:"+user.getId()+"@@"+info+"&&");
+            }
+            else{
+                record = new ProducerRecord<>(topic_name,  "/toUser:"+user.getId()+"@@"+info+"&&");
+            }
+            kafkaProducer.send(record);
+        };
+        executor.execute(send_task);
+    }
     /*
      * @param info: 发送的私密信息
     	 * @param user: 目标用户

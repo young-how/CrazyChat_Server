@@ -186,6 +186,7 @@ public class gameService {
             info.append("#qd \t说明：每日签到,随机生成一个(0-1)的随机数x，签到奖励=(1000+10*签到天数+30*连续签到天数)/(x+0.1)\n");
             info.append("#give \t说明：赠予其他玩家积分，使用格式为#give id n。其中id为输入#stat后得到的唯一id，n为赠送的积分数目。\n");
             info.append("#ask \t说明：向AI机器人提问，AI机器人会尽可能满足你的要求。\n");
+            info.append("#@ \t说明：向AI机器人提问，AI机器人会私信回复你（相应速度快，生成大量文本建议使用该模式）。\n");
             info.append("#join findSpy \t说明：加入寻找卧底游戏的等待队列中，当人数集齐后输入#start开始游戏。" +
                     "游戏说明：游戏开始后系统会给每个玩家发一个红色字体的私密信息，包含编号和自己的词语，游戏开始后所有玩家将名称改为对应的号码。" +
                     "当所有玩家描述完后输入#vote n投票给n号玩家。票数最多的玩家将会被踢出游戏，无法进行投票。直到所有卧底被找出或者游戏人数中的平民玩家小于卧底人数\n");
@@ -345,7 +346,13 @@ public class gameService {
             //询问ollama机器人
             String input = command.replace("#ask","");
             robot.askOllama(input);  //询问机器人问题，机器人回复
-            return user.getName()+"同学你好，我已经收到了你的问题，让我思考一会这个问题。";
+            return user.getName()+"？，我tm已经听到了，别走啊！等我一会。";
+        }
+        else if(command.contains("#@")){
+            //流式询问ollama机器人
+            String input = command.replace("#@","");
+            robot.askOllamaByStream(input,user);  //询问机器人问题，机器人回复(私密发送)
+            return "";
         }
         return "命令错误，请检查指令\n";
     }
