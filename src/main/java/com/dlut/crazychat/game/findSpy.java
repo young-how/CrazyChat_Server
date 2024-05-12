@@ -226,7 +226,7 @@ public class findSpy {
         vote_num.put(usr_id,vote_num.getOrDefault(usr_id,0)+1);  //为对应的用户投票
         num_votes+=1;  //投票人数+1
         isVoted.put(usr.getId(),true);
-        if(num_votes==users_gaming.size()||vote_num.getOrDefault(usr_id,0)>=0.5*users_gaming.size()){
+        if(num_votes==users_gaming.size()){
             re.put("info_vote","投票结束，投票结果：\n");
             re.putAll(oneTurnResult());  //这一轮投票结束，输出投票结果
             re.put("end","true");
