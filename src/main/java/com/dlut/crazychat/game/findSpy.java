@@ -4,18 +4,20 @@ import com.dlut.crazychat.pojo.userStat;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 @Data
 @Component
 public class findSpy {
     @Value("${game.findSpy.dictionary}")
-    private String dictionaryPath;   //词典文件名称
+    private Resource dictionaryPath;   //词典文件名称
     @Value("${game.findSpy.spyNum}")
     private int spyNum;  //卧底的人数
     @Value("${game.findSpy.rewardOneturn}")
@@ -44,7 +46,7 @@ public class findSpy {
         String line;
         String key;
         String value;
-        try(BufferedReader br=new BufferedReader(new FileReader(dictionaryPath))){
+        try(BufferedReader br=new BufferedReader(new InputStreamReader(dictionaryPath.getInputStream()))){
             while((line=br.readLine())!=null){
                 String[] data=line.split(",");
                 key=data[0];

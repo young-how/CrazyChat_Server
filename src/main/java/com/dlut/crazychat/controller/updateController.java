@@ -44,6 +44,12 @@ public class updateController {
     @Autowired
     private ClientService clientservice;
 
+    @GetMapping("/latestVersion")
+    @ResponseBody
+    public String getLatestVersion(){
+        ClientVersion newestClientVersion = clientservice.getNewestClientVersion();
+        return newestClientVersion.getVersion();
+    }
     @GetMapping("/update")
     public ResponseEntity<Resource> downloadFile() {
         String fileName=FILE_DIRECTORY+"/CrazyChat.exe";
@@ -108,6 +114,10 @@ public class updateController {
             fileName=targetClient.getExecuteFileName();
         }
         else if(format.equals(".zip")){
+            file = new File(targetClient.getZipFilePath());
+            fileName=targetClient.getZipFileName();
+        }
+        else if(format.equals(".dmg")){
             file = new File(targetClient.getZipFilePath());
             fileName=targetClient.getZipFileName();
         }
