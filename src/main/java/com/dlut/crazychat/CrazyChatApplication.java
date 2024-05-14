@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class CrazyChatApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CrazyChatApplication.class, args);
+        SpringApplication.run(CrazyChatApplication.class, args);  //test
     }
 
 }
