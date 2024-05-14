@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,9 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -175,7 +174,20 @@ public class updateController {
         return "上传文件成功";
     }
     @GetMapping("/adminPage")
-    public String getAdminPage(){
+    public String getAdminPage(Model model){
+        Map<String,ClientVersion> re=clientservice.getClientVersion();
+        List<ClientVersion> append=new ArrayList<>(re.values());
+        model.addAttribute("clientVersions",append);
         return "uploadUpdate";
+    }
+    /*
+    获取客户端的版本信息
+     */
+    @GetMapping("/ClientInfo")
+    public String getClientInfo(Model model){
+        Map<String,ClientVersion> re=clientservice.getClientVersion();
+        List<ClientVersion> append=new ArrayList<>(re.values());
+        model.addAttribute("clientVersions",append);
+        return "ClientVersionPage";
     }
 }

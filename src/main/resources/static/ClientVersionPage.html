@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Versions</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<h1>Client Versions</h1>
+<table id="clientVersionsTable">
+    <thead>
+    <tr>
+        <th>Execute File Name</th>
+        <th>Zip File Name</th>
+        <th>Version</th>
+        <th>Update Log</th>
+<!--        <th>Platform</th>-->
+        <th>Execute File Size (MB)</th>
+        <th>Zip File Size (MB)</th>
+        <th>Date</th>
+<!--        <th>Execute File Path</th>-->
+<!--        <th>Zip File Path</th>-->
+    </tr>
+    </thead>
+    <tbody id="clientVersionsBody">
+    <tr th:each="clientVersion : ${clientVersions}">
+        <td th:text="${clientVersion.executeFileName}"></td>
+        <td th:text="${clientVersion.zipFileName}"></td>
+        <td th:text="${clientVersion.version}"></td>
+        <td th:text="${clientVersion.updateLog}"></td>
+<!--        <td th:text="${clientVersion.platform}"></td>-->
+        <td th:text="${clientVersion.executeFileSize}"></td>
+        <td th:text="${clientVersion.zipFileSize}"></td>
+        <td th:text="${clientVersion.date}"></td>
+<!--        <td th:text="${clientVersion.executeFilePath}"></td>-->
+<!--        <td th:text="${clientVersion.zipFilePath}"></td>-->
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

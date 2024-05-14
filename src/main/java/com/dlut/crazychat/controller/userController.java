@@ -1,15 +1,30 @@
 package com.dlut.crazychat.controller;
 
+import com.dlut.crazychat.enum_class.platForm;
+import com.dlut.crazychat.pojo.ClientVersion;
 import com.dlut.crazychat.pojo.rankList;
 import com.dlut.crazychat.pojo.userStat;
+import com.dlut.crazychat.service.ClientService;
 import com.dlut.crazychat.service.userService;
 import com.dlut.crazychat.utils.SystemManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 public class userController {
@@ -17,6 +32,36 @@ public class userController {
     public userService userservice;
     @Autowired
     private SystemManager Sys;
+    @Autowired
+    private ClientService clientservice;
+    @Value("${Server.config.mediaSourcePath}")
+    private String mediaSourcePath;
+    private String picTemplate_pre="<!DOCTYPE html>\n" +
+            "<html lang=\"en\">\n" +
+            "<head>\n" +
+            "    <meta charset=\"UTF-8\">\n" +
+            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+            "    <title>Adjust Image Max Width</title>\n" +
+            "    <style>\n" +
+            "        img {\n" +
+            "            width: 250px; /* 设置图片的最大宽度为 200px */\n" +
+            //"            width: 100%; /* 设置图片的宽度为父元素的宽度 */\n" +
+            "            height: auto; /* 保持图片宽高比 */\n" +
+            "        }\n" +
+            "    </style>\n" +
+            "</head>\n" +
+            "<body>\n" +
+            "<img src=\"";
+    private String picTemplate_back="\" alt=\"Example Image\">\n" +
+            "</body>\n" +
+            "</html>";
+    @Value("${app.ip}")
+    private String server_ip;
+    @Value("${server.port}")
+    private String server_port;
+    public String getImageURI(String fileName){
+        return "http://"+server_ip+":"+server_port+"/getImage/"+fileName;
+    }
     //前端获取用户状态
     @PostMapping("/getState")
     public ResponseEntity<userStat> getUserStat(@RequestBody userStat userstat){
@@ -59,4 +104,61 @@ public class userController {
         Sys.send("test",id);
         return id;
     }
+    /*
+    向服务器发送媒体数据，包括图片、视频、程序等。
+     */
+    @PostMapping("/sendFile")
+    @ResponseBody
+    public String handleFileUpload(@RequestParam("file") MultipartFile[] files) {
+
+        // 处理文件上传
+        if (files.length!=0) {
+
+            for(MultipartFile file:files){
+                try {
+                    String refileName=file.getOriginalFilename();  //文件id
+                    if(file.getOriginalFilename().contains(".png")){
+                        refileName= "picID_"+UUID.randomUUID().toString()+".png";  //随机生成图片id
+                    }
+                    else if(file.getOriginalFilename().contains(".jpg")){
+                        refileName= "picID_"+UUID.randomUUID().toString()+".jpg";  //随机生成图片id
+                    }
+                    else if(file.getOriginalFilename().contains(".gif")){
+                        refileName= "picID_"+UUID.randomUUID().toString()+".gif";  //随机生成图片id
+                    }
+                    String uploadPath=mediaSourcePath+"/pic/"; //默认资源目录
+                    Files.copy(file.getInputStream(), Paths.get(uploadPath, refileName));
+                    String html_info=":\n/WithHtmlContent:"+picTemplate_pre+getImageURI(refileName)+picTemplate_back;  //生成html文档
+                    Sys.send(html_info);
+                } catch (Exception e) {
+                    return "文件上传失败：" + e.getMessage();
+                }
+            }
+        } else {
+            return "上传文件为空";
+        }
+        return "上传文件成功";
+    }
+    @GetMapping("/getImage/{imageName}")
+    public ResponseEntity<byte[]> getImage(@PathVariable String imageName) {
+        // 图片文件路径
+        String imagePath = mediaSourcePath+"/pic/"+imageName;
+
+        // 创建资源对象
+        Resource resource = new FileSystemResource(imagePath);
+
+        try {
+            // 读取图片内容
+            byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+
+            // 构造响应实体
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .body(imageBytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
 }

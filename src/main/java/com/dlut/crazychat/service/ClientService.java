@@ -71,6 +71,12 @@ public class ClientService {
             client.setZipFileSize(file.getSize()/1024.0/1024.0);  //将文件大小转换为mb
             client.setZipFilePath(uploadPath+"/"+file.getOriginalFilename());  //设置上传路径位置
         }
+        else if(file.getOriginalFilename().contains(".dmg")){
+            uploadPath+="/MacCrazyChat/"+client.getVersion()+"/";
+            client.setDmgFileName(file.getOriginalFilename());
+            client.setDMGFileSize(file.getSize()/1024.0/1024.0);  //将文件大小转换为mb
+            client.setDMGFilePath(uploadPath+"/"+file.getOriginalFilename());  //设置上传路径位置
+        }
         else return "未知的文件类型:"+file.getOriginalFilename();
 
         // 创建一个File对象来表示路径
