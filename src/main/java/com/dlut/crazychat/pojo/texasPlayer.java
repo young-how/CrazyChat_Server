@@ -15,6 +15,7 @@ public class texasPlayer {
     private boolean folded; // 表示玩家是否已弃牌
     private boolean leaved;  //是否离开牌局
     private int money;  //当前身上的积分
+    private int no;   //牌局中的序号
     private List<String> hand;  //手牌
     private PokerUtils.Hand cardLevel;  //手牌等级
 

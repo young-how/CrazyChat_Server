@@ -1,5 +1,6 @@
 package com.dlut.crazychat.service;
 
+import com.dlut.crazychat.pojo.pokerDesk;
 import com.dlut.crazychat.pojo.texasPlayer;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.utils.PokerUtils;
@@ -25,7 +26,7 @@ public class texaspokerService {
     private List<String> boardCards; //场面牌
     private List<texasPlayer> winner=new ArrayList<>();  //赢家
     private List<texasPlayer> second_winner=new ArrayList<>();  //池边赢家
-
+    private boolean started;  //游戏是否已经启动
 
     public boolean joinRoom(userStat user,int init_money) {
         if(user==null) return false;  //空用户加入失败
@@ -56,9 +57,32 @@ public class texaspokerService {
         room.remove(indx);  //删除某位用户
         return reward;
     }
+    /*
+    根据用户请求返回牌桌信息
+     */
+    public pokerDesk getDeskInfo(userStat user){
+        pokerDesk desk=new pokerDesk();
+        desk.setPot(pot);
+        desk.setCurrentUser_id(currentPlayerIndex);
+        for(int i=0;i<room.size();i++){
+            texasPlayer player=room.get(i);
+            player.setNo(i);  //设置在序列中的编号
+            List<String> hand=new ArrayList<>();
+            if(started==false){
+                //游戏结算时牌型可见
+                hand.add
+            }
+            if(player.getId().equals(user.getId())){
+                //该用户是自己
+            }
+            hand.add()
+            player.setHand();
 
+        }
+    }
     public void startGame() {
         deck.shuffle();
+        started=true;
         currentTurn=0;  //重置当前下注的轮次
         //重置所有玩家状态
         resetAllUser();
@@ -102,6 +126,7 @@ public class texaspokerService {
             System.out.println("玩家id"+player.getId()+"  玩家剩余积分:"+player.getMoney());
         }
         System.out.println("奖池剩余:"+pot);
+        started=false;
     }
     /*
     牌型比较
