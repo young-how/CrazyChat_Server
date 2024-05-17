@@ -5,8 +5,10 @@ import com.dlut.crazychat.pojo.ClientVersion;
 import com.dlut.crazychat.pojo.rankList;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.service.ClientService;
+import com.dlut.crazychat.service.fileService;
 import com.dlut.crazychat.service.userService;
 import com.dlut.crazychat.utils.SystemManager;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,8 @@ public class userController {
     private ClientService clientservice;
     @Value("${Server.config.mediaSourcePath}")
     private String mediaSourcePath;
+    @Autowired
+    private fileService fileservice;
     private String picTemplate_pre="<!DOCTYPE html>\n" +
             "<html lang=\"en\">\n" +
             "<head>\n" +
@@ -110,12 +114,20 @@ public class userController {
      */
     @PostMapping("/sendFile")
     @ResponseBody
-    public String handleFileUpload(@RequestParam("file") MultipartFile[] files,@RequestParam("user") String json_user) {
-        // 处理文件上传
+    public String handleFileUpload(@RequestParam("file") MultipartFile[] files,@RequestParam("user") String json_user) throws JsonProcessingException {
+        ObjectMapper objectMapper=new ObjectMapper();
+        userStat user=objectMapper.readValue(json_user, userStat.class);
         if (files.length!=0) {
 
             for(MultipartFile file:files){
                 try {
+
+                    String fileMD5=fileservice.getMD5Checksum(file); //计算文件MD5
+                    if(!fileservice.MD5exist(fileMD5)){
+                        //MD5码不存在
+                        userservice.addScore(user,2000);   //单张表情包的奖励
+                        fileservice.putMD2pool(fileMD5);  //添加到MD5
+                    }
                     String refileName=file.getOriginalFilename();  //文件id
                     if(file.getOriginalFilename().contains(".png")){
                         refileName= "picID_"+UUID.randomUUID().toString()+".png";  //随机生成图片id
@@ -128,9 +140,8 @@ public class userController {
                     }
                     String uploadPath=mediaSourcePath+"/pic/"; //默认资源目录
                     Files.copy(file.getInputStream(), Paths.get(uploadPath, refileName));
-                    ObjectMapper objectMapper=new ObjectMapper();
-                    userStat user=objectMapper.readValue(json_user, userStat.class);
                     String html_info="/WithHtmlContent:"+user.getName()+":"+picTemplate_pre+getImageURI(refileName)+picTemplate_back;  //生成html文档
+
                     Sys.send(html_info);
                 } catch (Exception e) {
                     return "文件上传失败：" + e.getMessage();
