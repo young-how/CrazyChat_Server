@@ -3,10 +3,11 @@ package com.dlut.crazychat.pojo;
 import com.dlut.crazychat.utils.PokerUtils;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class texasPlayer {
+public class texasPlayer implements Cloneable{
     private String id;
     private userStat user;  //对应游戏外的用户
     private int currentBet;  //当前轮次的下注
@@ -16,9 +17,12 @@ public class texasPlayer {
     private boolean leaved;  //是否离开牌局
     private int money;  //当前身上的积分
     private int no;   //牌局中的序号
-    private List<String> hand;  //手牌
+    private List<String> hand=new ArrayList<>();  //手牌
     private PokerUtils.Hand cardLevel;  //手牌等级
-
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
     public texasPlayer(String id) {
         this.id = id;
         this.currentBet = 0;
@@ -28,6 +32,7 @@ public class texasPlayer {
     }
     public texasPlayer(userStat user) {
         this.id = user.getId();
+        this.user=user;
         this.currentBet = 0;
         this.currentGameBet=0;
         this.acted = false;
