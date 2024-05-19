@@ -16,7 +16,7 @@ public class pokerDesk {
     private int pot;   //当前奖池
     private int money;  //自己的筹码
     private int currentUser_id;   //当前操作的玩家序号
-    private int own_id;   //玩家的序号
+    private int own_id=-1;   //玩家的序号
     private List<texasPlayer> users=new ArrayList<>();  //所有用户的信息
     private int round;  //当前的下注轮次
     private int currentHighestBet;  //当前最高下注金额

@@ -18,7 +18,8 @@ public class texasPlayer implements Cloneable{
     private int money;  //当前身上的积分
     private int no;   //牌局中的序号
     private List<String> hand=new ArrayList<>();  //手牌
-    private PokerUtils.Hand cardLevel;  //手牌等级
+    private String cardLevel;  //手牌等级
+    private pokerStatics statics;  //个人的统计信息
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -61,6 +62,7 @@ public class texasPlayer implements Cloneable{
     新的下注轮次，重置下注金额
      */
     public void resetTurn(){
+        this.acted=false;
         this.currentBet = 0;
     }
     public void bet(int amount) {

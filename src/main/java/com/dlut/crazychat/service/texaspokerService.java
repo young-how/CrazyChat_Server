@@ -4,8 +4,10 @@ import com.dlut.crazychat.pojo.pokerDesk;
 import com.dlut.crazychat.pojo.texasPlayer;
 import com.dlut.crazychat.pojo.userStat;
 import com.dlut.crazychat.utils.PokerUtils;
+import com.dlut.crazychat.utils.pokerScoring;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -22,19 +24,21 @@ import static java.lang.Thread.sleep;
 @Data
 public class texaspokerService {
     //private Map<String, List<userStat>> rooms = new HashMap<>(); // 房间ID到用户列表的映射
-    private Deck deck=new Deck(); // 房间牌堆
-    private List<texasPlayer> room =new ArrayList<>(); // 房间ID到玩家列表的映射
-    private HashMap<String,userStat> userInGame=new HashMap<>();   //房间中中的用户id和用户实体的映射
+    private volatile Deck deck=new Deck(); // 房间牌堆
+    private volatile List<texasPlayer> room =new ArrayList<>(); // 房间ID到玩家列表的映射
+    private volatile HashMap<String,userStat> userInGame=new HashMap<>();   //房间中中的用户id和用户实体的映射
     private  int currentPlayerIndex=0; // 当前玩家索引
     private volatile Integer highestBet=0; // 当前最高下注金额
     private volatile Integer pot=0; // 奖池金额
     private volatile Integer currentTurn=0;  //当前下注轮次
-    private List<String> boardCards=new ArrayList<>(); //场面牌
-    private List<texasPlayer> winner=new ArrayList<>();  //赢家
-    private List<texasPlayer> second_winner=new ArrayList<>();  //池边赢家
+    private volatile List<String> boardCards=new ArrayList<>(); //场面牌
+    private volatile List<texasPlayer> winner=new ArrayList<>();  //赢家
+    private volatile List<texasPlayer> second_winner=new ArrayList<>();  //池边赢家
     private volatile boolean started;  //游戏是否已经启动
     private volatile Map<String,Integer> currentUserAction=new HashMap<>();  //当前玩家的动作
     private ThreadPoolExecutor pool=new ThreadPoolExecutor(5,5,60L, TimeUnit.SECONDS,new LinkedBlockingQueue<>(5));
+    @Autowired
+    private pokerScoring pokerscoring;  //用于统计得分的工具类
     @PostConstruct
     public void init(){
         listenUserBet();  //异步监听当前用户的操作
@@ -162,10 +166,11 @@ public class texaspokerService {
 
         for(int i=0;i<room.size();i++){
             texasPlayer player=(texasPlayer) room.get(i).clone();
+            player.setStatics(pokerscoring.getPokerStaticsByID(player.getId()));  //返回胜率信息等
             player.setNo(i);  //设置在序列中的编号
             List<String> hand=new ArrayList<>();
-            if(started==false){
-                //游戏结算时牌型可见
+            if(started==false&&!player.getId().equals(user.getId())){
+                //游戏结算时,其他玩家的牌型可见
                 hand.addAll(player.getHand());  //将手牌可见
             }
             if(player.getId().equals(user.getId())){
@@ -173,9 +178,9 @@ public class texaspokerService {
                 desk.setHadCards(player.getHand());
                 desk.setMoney(player.getMoney());
                 desk.setOwn_id(i);  //设置自己的序号
-                player.setCardLevel(null);  //牌型不可见
+                if(started) player.setCardLevel(null);  //牌型不可见
             }
-            else{
+            else if(started){
                 player.setCardLevel(null);
             }
             player.setHand(hand);
@@ -187,6 +192,7 @@ public class texaspokerService {
         deck.shuffle();
         started=true;
         currentTurn=0;  //重置当前下注的轮次
+        setCurrentPlayerIndex(0);  //最开始的玩家设置为0号
         //重置所有玩家状态
         resetAllUser();
         // 分配决策顺序，发牌等逻辑
@@ -206,7 +212,7 @@ public class texaspokerService {
             while (true){
                 try {
                     nextBettingRound();
-                    sleep(200);
+                    sleep(20);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }finally {
@@ -226,9 +232,9 @@ public class texaspokerService {
     重置所有玩家状态
      */
     public void resetAllUser(){
-        for(texasPlayer player:room){
+        for(texasPlayer player:getRoom()){
             if(player.isLeaved()){
-                room.remove(player);  //移除该玩家
+                getRoom().remove(player);  //移除该玩家
                 continue;
             }
             player.resetGame();
@@ -242,14 +248,8 @@ public class texaspokerService {
         second_winner.clear();  //清除池边赢家
         choseWinner();  //计算赢家和池边赢家
         allocatePot(); //分配筹码
-        for(texasPlayer player:winner){
-            System.out.println("玩家id"+player.getId()+"  玩家牌型:"+player.getCardLevel().rank+" 手牌:"+player.getHand()+" 场面牌:"+boardCards);
-        }
-        for(texasPlayer player:second_winner){
-            System.out.println("玩家id"+player.getId()+"  玩家牌型:"+player.getCardLevel().rank+" 手牌:"+player.getHand()+" 场面牌:"+boardCards);
-        }
         System.out.println("所有玩家的信息");
-        for(texasPlayer player:room){
+        for(texasPlayer player:getRoom()){
             System.out.println("玩家id"+player.getId()+"  玩家剩余积分:"+player.getMoney());
         }
         System.out.println("奖池剩余:"+pot);
@@ -259,9 +259,9 @@ public class texaspokerService {
     牌型比较
      */
     public void choseWinner(){
-        for(texasPlayer player:room){
+        for(texasPlayer player:getRoom()){
             PokerUtils.Hand gamer=PokerUtils.evaluateBestHand(player.getHand(),boardCards);  //当前玩家场面牌+手牌
-            player.setCardLevel(gamer);  //设置玩家的手牌等级
+            player.setCardLevel(gamer.rank.toString());  //设置玩家的手牌等级
             System.out.println("玩家id"+player.getId()+"  玩家牌型:"+gamer.rank+" 手牌:"+player.getHand()+" 场面牌:"+boardCards);
             if(player.isFolded()) continue;  //弃牌玩家不参与结算
             if(winner.size()==0){
@@ -299,7 +299,7 @@ public class texaspokerService {
         }
     }
     /*
-    奖池积分结算
+    奖池积分结算，并将得分信息统计到redis
      */
     public void allocatePot(){
         //结算每个赢家的积分
@@ -310,13 +310,17 @@ public class texaspokerService {
                 int reward=Math.min(player.getCurrentGameBet()*room.size(),moneyAdd); //计算showhand后的奖励
                 pot-=reward;
                 player.setMoney(reward);
+                pokerscoring.addPokerNum(player.getId(),true,reward-player.getCurrentGameBet(),player.getCardLevel()); //统计赢家信息
             }else{
                 player.addMoney(moneyAdd);  //获得金钱奖励
                 pot-=moneyAdd;  //奖池减少
+                pokerscoring.addPokerNum(player.getId(),true,moneyAdd-player.getCurrentGameBet(),player.getCardLevel()); //统计赢家信息
             }
         }
+        boolean secondGamer_win=false;  //第二大的玩家是否分配到奖励
         if(pot>0){
             //奖池还有剩余，池边赢家瓜分
+            secondGamer_win=true;
             int moneyAdd_second=pot/ second_winner.size();  //每个赢家的奖池积分
             for(texasPlayer player:second_winner){
                 if(player.getMoney()==0){
@@ -324,11 +328,18 @@ public class texaspokerService {
                     int reward=Math.min(player.getCurrentGameBet()*room.size(),moneyAdd_second); //计算showhand后的奖励
                     pot-=reward;
                     player.setMoney(reward);
+                    pokerscoring.addPokerNum(player.getId(),true,reward-player.getCurrentGameBet(),player.getCardLevel()); //统计赢家信息
                 }else{
                     player.addMoney(moneyAdd_second);  //获得金钱奖励
                     pot-=moneyAdd_second;  //奖池减少
+                    pokerscoring.addPokerNum(player.getId(),true,moneyAdd_second-player.getCurrentGameBet(),player.getCardLevel()); //统计赢家信息
                 }
             }
+        }
+        //统计其他没有获奖的玩家
+        for(texasPlayer player:getRoom()){
+            if(winner.contains(player)||(second_winner.contains(player)&&secondGamer_win)) continue;
+            pokerscoring.addPokerNum(player.getId(),false,-player.getCurrentGameBet(),player.getCardLevel()); //统计非赢家信息
         }
     }
     /*
@@ -413,6 +424,7 @@ public class texaspokerService {
                         setHighestBet(currentPlayer.getCurrentBet());
                         // 重置所有玩家的行动状态，让他们再次行动
                         resetPlayersAction(players);
+                        currentPlayer.setActed(true);  //当前玩家不用重置
                     }
                     System.out.println(currentIndex+"号玩家已下注:"+currentPlayer.getCurrentBet()+"积分，当前奖池:"+pot);
                 }
@@ -423,12 +435,13 @@ public class texaspokerService {
             if (allPlayersActed(players, currentHighestBet)) {
                 break;
             }
-            sleep(100);
+            sleep(20);
         }
         //一轮次的下注已经完毕，进行后续处理
         //currentPlayerIndex=currentIndex;
+        setCurrentPlayerIndex(0);
         startNewTurn();  //开始新一轮的设置
-        if(getCurrentTurn()==3){
+        if(getCurrentTurn()==4){
             //最后一轮下注已完成
             Settlement();  //结算奖励
             return;
@@ -441,7 +454,7 @@ public class texaspokerService {
         //highestBet=0;  //重置该轮下注的金额
         setHighestBet(0);
         //currentTurn=(currentTurn+1)%4;  //进入下一轮次的下注
-        setCurrentTurn((getCurrentTurn()+1)%4);
+        setCurrentTurn((getCurrentTurn()+1)%5);
         for(texasPlayer player:getRoom()){
             player.resetTurn();  //下注金额置为0
         }
@@ -451,7 +464,7 @@ public class texaspokerService {
      */
     public boolean checkEnd(){
         int count=0;
-        for(texasPlayer player:room){
+        for(texasPlayer player:getRoom()){
             if(!player.isFolded()) count++; //没有弃牌的玩家数目
             if(count>1) return false;
             //if(player.getMoney()==0) showHand_num++;  //showhand的玩家数目

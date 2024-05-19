@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import static java.lang.Thread.sleep;
+
 /*
 德州扑克的控制器
  */
@@ -99,15 +101,18 @@ public class pokerController {
                     betSuccess=pokerservice.bet(money);  //下注
                 }
             }
+            sleep(50);
             pokerDesk re=pokerservice.getDeskInfo(user);  //返回牌局信息
             if(!isCurrent) re.setSystemInfo("当前不是你的回合，操作失败!\n");
-            else if (betSuccess) {
+            else if (!betSuccess) {
                 re.setSystemInfo("下注金额不够!\n");
             } else re.setSystemInfo("操作成功!\n");
             return ResponseEntity.ok().body(re);
         }
         catch (RuntimeException | CloneNotSupportedException e){
             return  ResponseEntity.notFound().build();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }
