@@ -67,6 +67,7 @@ public class texaspokerService {
     public boolean joinRoom(userStat user,int init_money) {
         if(user==null) return false;  //空用户加入失败
         if(!userInGame.containsKey(user.getId())){
+            //玩家已经退出
             userInGame.put(user.getId(),user);
             texasPlayer player=new texasPlayer(user);
             player.setMoney(init_money);
@@ -75,17 +76,29 @@ public class texaspokerService {
                 player.setFolded(true);  //默认弃牌
             }
             boolean inRoom=false;  //玩家是否还在房间的玩家列表中
+            //如果玩家还在房间里，join变为充钱逻辑
             for(texasPlayer playerInGaming:room){
                 if(playerInGaming.getId().equals(user.getId())){
-                    playerInGaming.setFolded(true);
+                    //playerInGaming.setFolded(true);
                     playerInGaming.setLeaved(false);
-                    playerInGaming.setMoney(init_money);
+                    playerInGaming.setMoney(playerInGaming.getMoney()+init_money);  //充钱
                     playerInGaming.setUser(user);
                     inRoom=true;
                 }
             }
             if(!inRoom)  room.add(player);  //该用户不在房间中，才加入用户列表
             return true;
+        }else{
+            //玩家未退出，知识兑换筹码
+            for(texasPlayer playerInGaming:room){
+                if(playerInGaming.getId().equals(user.getId())){
+                    //playerInGaming.setFolded(true);
+                    playerInGaming.setLeaved(false);
+                    playerInGaming.setMoney(playerInGaming.getMoney()+init_money);  //充钱
+                    playerInGaming.setUser(user);
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -133,10 +146,19 @@ public class texaspokerService {
         desk.setStarted(started);  //是否开始游戏
         desk.setCurrentHighestBet(highestBet);  //设置当前下注金额
         desk.setRound(currentTurn);  //设置当前下注轮次
+        if(winner.size()>0){
+            StringBuilder re=new StringBuilder();
+            for(texasPlayer pl:winner){
+                re.append(getNo(pl.getUser())+"号玩家 ");
+                desk.setWinner_cards(pl.getHand());  //设置赢家手牌
+            }
+            desk.setWinner(re.toString());
+        }
+
 
         //根据轮次设置用户可见的桌面牌
         if(boardCards!=null&&boardCards.size()==5){
-            if(currentTurn==0){
+            if(currentTurn==0&&started){
                 //第一轮下注
                 desk.setBoardCards(new ArrayList<>());  //桌面牌是空的
             }
@@ -154,7 +176,7 @@ public class texaspokerService {
                 desk.getBoardCards().add(boardCards.get(1));
                 desk.getBoardCards().add(boardCards.get(2));
                 desk.getBoardCards().add(boardCards.get(3));
-            } else{
+            } else if(currentTurn>=3||!started){
                 desk.setBoardCards(new ArrayList<>());
                 desk.getBoardCards().add(boardCards.get(0));
                 desk.getBoardCards().add(boardCards.get(1));

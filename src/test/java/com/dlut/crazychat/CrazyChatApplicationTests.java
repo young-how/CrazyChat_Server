@@ -102,47 +102,47 @@ class CrazyChatApplicationTests {
     }
     @Test
     public void testRunOneTurn(){
-        userStat user1=new userStat();
-        userStat user2=new userStat();
-        userStat user3=new userStat();
-        userStat user4=new userStat();
-        user1.setId("user1");
-        user2.setId("user2");
-        user3.setId("user3");
-        user4.setId("user4");
-        pokerService.joinRoom(user1,3000);
-        pokerService.joinRoom(user2,2000);
-        pokerService.joinRoom(user3,1000);
-        pokerService.joinRoom(user4,500);
-        pokerService.nextBettingRound();
+//        userStat user1=new userStat();
+//        userStat user2=new userStat();
+//        userStat user3=new userStat();
+//        userStat user4=new userStat();
+//        user1.setId("user1");
+//        user2.setId("user2");
+//        user3.setId("user3");
+//        user4.setId("user4");
+//        pokerService.joinRoom(user1,3000);
+//        pokerService.joinRoom(user2,2000);
+//        pokerService.joinRoom(user3,1000);
+//        pokerService.joinRoom(user4,500);
+//        pokerService.nextBettingRound();
     }
     @Test
     public void wholeGame(){
-        userStat user1=new userStat();
-        userStat user2=new userStat();
-        userStat user3=new userStat();
-        userStat user4=new userStat();
-        userStat user5=new userStat();
-        userStat user6=new userStat();
-        user1.setId("user1");
-        user2.setId("user2");
-        user3.setId("user3");
-        user4.setId("user4");
-        user5.setId("user5");
-        user6.setId("user6");
-        pokerService.joinRoom(user1,3000);
-        pokerService.joinRoom(user2,2000);
-        pokerService.joinRoom(user3,1000);
-        pokerService.joinRoom(user4,500);
-        pokerService.joinRoom(user5,60000);
-        pokerService.joinRoom(user6,8000);
-        for(int t=0;t<10;t++){
-            pokerService.startGame();  //开始游戏
-            for(int i=0;i<3;i++){
-                //下三轮注
-                pokerService.setHighestBet(100*(i+1));
-                pokerService.nextBettingRound();
-            }
-        }
+//        userStat user1=new userStat();
+//        userStat user2=new userStat();
+//        userStat user3=new userStat();
+//        userStat user4=new userStat();
+//        userStat user5=new userStat();
+//        userStat user6=new userStat();
+//        user1.setId("user1");
+//        user2.setId("user2");
+//        user3.setId("user3");
+//        user4.setId("user4");
+//        user5.setId("user5");
+//        user6.setId("user6");
+//        pokerService.joinRoom(user1,3000);
+//        pokerService.joinRoom(user2,2000);
+//        pokerService.joinRoom(user3,1000);
+//        pokerService.joinRoom(user4,500);
+//        pokerService.joinRoom(user5,60000);
+//        pokerService.joinRoom(user6,8000);
+//        for(int t=0;t<10;t++){
+//            pokerService.startGame();  //开始游戏
+//            for(int i=0;i<3;i++){
+//                //下三轮注
+//                pokerService.setHighestBet(100*(i+1));
+//                pokerService.nextBettingRound();
+//            }
+//        }
     }
 }

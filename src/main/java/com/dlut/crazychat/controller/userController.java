@@ -125,7 +125,7 @@ public class userController {
                     String fileMD5=fileservice.getMD5Checksum(file); //计算文件MD5
                     if(!fileservice.MD5exist(fileMD5)){
                         //MD5码不存在
-                        userservice.addScore(user,2000);   //单张表情包的奖励
+                        userservice.addScore(user,500);   //单张表情包的奖励
                         fileservice.putMD2pool(fileMD5);  //添加到MD5
                     }
                     String refileName=file.getOriginalFilename();  //文件id

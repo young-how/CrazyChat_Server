@@ -128,7 +128,7 @@ public class fileService {
      */
     public void putMD2pool(String MD5){
         redisTemplate.opsForHash().put(MD2poolKey,MD5,true);
-        redisTemplate.expire(MD2poolKey,3600, TimeUnit.SECONDS);
+        redisTemplate.expire(MD2poolKey,7200, TimeUnit.SECONDS);
     }
     public boolean MD5exist(String MD5){
         if(redisTemplate.opsForHash().get(MD2poolKey,MD5)==null) return false;
